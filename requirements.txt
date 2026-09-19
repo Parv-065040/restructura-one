@@ -1,7 +1,7 @@
 ﻿streamlit
 groq
 faiss-cpu
-sentence-transformers
+sentence-transformers==5.1.2
 python-dotenv
 pydantic>=2,<3
 pytest
