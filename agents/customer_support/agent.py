@@ -1,4 +1,4 @@
-﻿"""Customer Support Intelligence agent for Restructura One."""
+"""Customer Support Intelligence agent for Restructura One."""
 
 from core.agent_interface import AgentRunner
 from core.llm.groq_gateway import GroqGateway
@@ -106,7 +106,7 @@ The response is a draft for human review and must not be sent automatically.
 """
 
             answer = self.gateway.generate(
-                prompt=prompt,
+                user_prompt=prompt,
                 system_prompt=SYSTEM_PROMPT,
             )
 
