@@ -1,11 +1,18 @@
 ﻿"""Local FAISS retrieval over Markdown knowledge-base documents."""
 
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 
 import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
+
+
+@lru_cache(maxsize=4)
+def _load_embedding_model(model_name: str) -> SentenceTransformer:
+    """Load and reuse an embedding model by model name."""
+    return SentenceTransformer(model_name)
 
 
 @dataclass
@@ -26,7 +33,7 @@ class LocalRetriever:
         overlap_words: int = 35,
     ):
         self.documents_dir = Path(documents_dir)
-        self.model = SentenceTransformer(model_name)
+        self.model = _load_embedding_model(model_name)
         self.chunk_words = chunk_words
         self.overlap_words = overlap_words
         self.chunks: list[RetrievedChunk] = []
