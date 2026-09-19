@@ -1,9 +1,9 @@
-"""Run deterministic evaluation scenarios against the orchestrator."""
+﻿"""Run deterministic evaluation scenarios against the orchestrator."""
 
 from dataclasses import dataclass
 
 from core.orchestrator import AgentOrchestrator
-from core.schemas.agent_contracts import AgentContext, AgentStatus
+from core.schemas.agent_contracts import AgentContext
 
 from evaluation.scenario import EvaluationScenario
 
@@ -35,6 +35,17 @@ class EvaluationRunner:
             context=context,
         )
 
+        cited_source_ids = {
+            source.source_id for source in response.sources
+        }
+
+        expected_source_ids = scenario.expected_source_ids
+
+        citation_integrity = (
+            expected_source_ids is None
+            or cited_source_ids.issubset(set(expected_source_ids))
+        )
+
         checks: dict[str, bool] = {
             "department_matches": response.department == scenario.department,
             "status_matches": response.status == scenario.expected_status,
@@ -55,6 +66,7 @@ class EvaluationRunner:
                 not scenario.require_approval_for_actions
                 or all(action.requires_approval for action in response.actions)
             ),
+            "citation_integrity": citation_integrity,
         }
 
         messages = tuple(
