@@ -1,4 +1,4 @@
-"""Data models for deterministic agent evaluation scenarios."""
+﻿"""Data models for deterministic agent evaluation scenarios."""
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -21,4 +21,5 @@ class EvaluationScenario(BaseModel):
 
     expected_action_count: int | None = Field(default=None, ge=0)
     require_source_ids: bool = False
+    expected_source_ids: list[str] | None = None
     require_approval_for_actions: bool = True

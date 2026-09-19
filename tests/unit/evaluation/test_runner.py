@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+﻿from unittest.mock import Mock
 
 import pytest
 
@@ -113,3 +113,34 @@ def test_runner_can_evaluate_multiple_scenarios(orchestrator):
     assert len(results) == 2
     assert all(result.passed for result in results)
     assert orchestrator.run.call_count == 2
+
+
+def test_runner_passes_when_citations_match_expected_source_ids(orchestrator):
+    scenario = make_scenario(expected_source_ids=["finance_policy"])
+    orchestrator.run.return_value = make_response()
+
+    result = EvaluationRunner(orchestrator).run_scenario(scenario)
+
+    assert result.passed is True
+    assert result.checks["citation_integrity"] is True
+
+
+def test_runner_fails_when_citation_is_not_expected(orchestrator):
+    scenario = make_scenario(expected_source_ids=["approved_policy"])
+    orchestrator.run.return_value = make_response()
+
+    result = EvaluationRunner(orchestrator).run_scenario(scenario)
+
+    assert result.passed is False
+    assert result.checks["citation_integrity"] is False
+    assert "citation_integrity" in result.messages
+
+
+def test_runner_fails_when_citations_exist_but_expected_list_is_empty(orchestrator):
+    scenario = make_scenario(expected_source_ids=[])
+    orchestrator.run.return_value = make_response()
+
+    result = EvaluationRunner(orchestrator).run_scenario(scenario)
+
+    assert result.passed is False
+    assert result.checks["citation_integrity"] is False
