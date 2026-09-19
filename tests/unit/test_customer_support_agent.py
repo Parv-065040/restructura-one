@@ -1,4 +1,4 @@
-﻿from types import SimpleNamespace
+from types import SimpleNamespace
 
 from agents.customer_support.agent import CustomerSupportAgent
 from core.schemas.agent_contracts import (
@@ -17,7 +17,7 @@ class FakeRetriever:
 
 
 class FakeGateway:
-    def generate(self, prompt, system_prompt):
+    def generate(self, system_prompt, user_prompt, temperature=0.1, max_tokens=1200):
         return (
             "Ticket category: Account Access.\n"
             "Response draft: Please contact the approved support channel "
