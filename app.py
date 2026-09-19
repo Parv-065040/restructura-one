@@ -37,6 +37,134 @@ DEPARTMENT_LOOKUP = {
 }
 
 
+
+def inject_custom_css():
+    """Apply a polished enterprise theme without changing app behavior."""
+    st.markdown("""
+    <style>
+    /* RESTRUCTURA_PREMIUM_THEME */
+    :root {
+        --ro-bg: #0b1120;
+        --ro-panel: #111c2e;
+        --ro-panel-2: #162338;
+        --ro-border: rgba(148, 163, 184, 0.16);
+        --ro-text: #e8eef8;
+        --ro-muted: #94a8c4;
+        --ro-accent: #38bdf8;
+    }
+
+    .stApp {
+        background:
+            radial-gradient(ellipse at 12% 0%, rgba(14, 116, 144, .13), transparent 34%),
+            linear-gradient(145deg, #0b1120 0%, #0d1728 55%, #101a2d 100%);
+        color: var(--ro-text);
+    }
+
+    [data-testid="stHeader"] {
+        background: rgba(11, 17, 32, .78);
+    }
+
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #0a1221 0%, #101b2d 100%);
+        border-right: 1px solid var(--ro-border);
+    }
+
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+    [data-testid="stSidebar"] label {
+        color: #b6c6dc;
+    }
+
+    h1, h2, h3 {
+        color: #f3f7ff !important;
+        letter-spacing: -0.035em;
+    }
+
+    h1 {
+        font-weight: 750 !important;
+        line-height: 1.15 !important;
+    }
+
+    [data-testid="stCaptionContainer"] {
+        color: var(--ro-muted);
+    }
+
+    [data-testid="stAlert"] {
+        border-radius: 12px;
+        border: 1px solid var(--ro-border);
+    }
+
+    [data-testid="stVerticalBlockBorderWrapper"] {
+        background: linear-gradient(145deg, rgba(22, 35, 56, .88), rgba(15, 27, 44, .88));
+        border: 1px solid var(--ro-border) !important;
+        border-radius: 16px !important;
+        transition: border-color .18s ease, transform .18s ease;
+    }
+
+    [data-testid="stVerticalBlockBorderWrapper"]:hover {
+        border-color: rgba(56, 189, 248, .42) !important;
+    }
+
+    [data-testid="stButton"] button,
+    [data-testid="stFormSubmitButton"] button {
+        border-radius: 10px;
+        min-height: 42px;
+        font-weight: 600;
+        transition: all .18s ease;
+    }
+
+    [data-testid="stButton"] button[kind="primary"],
+    [data-testid="stFormSubmitButton"] button[kind="primary"] {
+        background: linear-gradient(110deg, #0284c7, #2563eb);
+        border: 1px solid rgba(125, 211, 252, .3);
+        color: white;
+        box-shadow: 0 5px 18px rgba(2, 132, 199, .15);
+    }
+
+    [data-testid="stButton"] button:hover,
+    [data-testid="stFormSubmitButton"] button:hover {
+        border-color: #38bdf8;
+        transform: translateY(-1px);
+    }
+
+    [data-testid="stTextArea"] textarea,
+    [data-testid="stTextInput"] input {
+        background: #0d1829;
+        border: 1px solid #2b3c55;
+        border-radius: 10px;
+        color: #e8eef8;
+    }
+
+    [data-testid="stTextArea"] textarea:focus,
+    [data-testid="stTextInput"] input:focus {
+        border-color: #38bdf8;
+        box-shadow: 0 0 0 1px #38bdf8;
+    }
+
+    [data-testid="stExpander"] {
+        background: rgba(17, 28, 46, .72);
+        border: 1px solid var(--ro-border);
+        border-radius: 12px;
+    }
+
+    hr {
+        border-color: var(--ro-border);
+    }
+
+    [data-testid="stMarkdownContainer"] a {
+        color: #7dd3fc;
+    }
+
+    @media (max-width: 768px) {
+        .block-container {
+            padding-top: 1.2rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+
 @st.cache_resource(show_spinner="Initializing departmental assistants...")
 def get_orchestrator():
     """Initialize the shared orchestrator once per Streamlit process."""
@@ -208,6 +336,7 @@ def render_history():
 
 
 def main():
+    inject_custom_css()
     if "selected_department" not in st.session_state:
         st.session_state.selected_department = None
 
