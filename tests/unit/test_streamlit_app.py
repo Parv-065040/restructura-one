@@ -79,3 +79,77 @@ def test_render_response_displays_proposed_actions():
     mock_st.caption.assert_any_call(
         "These are proposals only. No action is executed by this interface."
     )
+
+
+# Dashboard and session-history tests
+
+from types import SimpleNamespace
+from unittest.mock import MagicMock
+
+
+def test_render_dashboard_displays_all_department_cards():
+    with patch("app.st") as mock_st:
+        mock_st.columns.return_value = [MagicMock(), MagicMock()]
+        mock_st.container.return_value.__enter__.return_value = None
+        mock_st.button.return_value = False
+
+        from app import render_dashboard
+        render_dashboard()
+
+    mock_st.subheader.assert_any_call("Your AI workspace")
+
+    open_buttons = [
+        call for call in mock_st.button.call_args_list
+        if call.args and call.args[0].startswith("Open ")
+    ]
+    assert len(open_buttons) == 8
+
+
+def test_render_dashboard_shows_workspace_description():
+    with patch("app.st") as mock_st:
+        mock_st.columns.return_value = [MagicMock(), MagicMock()]
+        mock_st.container.return_value.__enter__.return_value = None
+        mock_st.button.return_value = False
+
+        from app import render_dashboard
+        render_dashboard()
+
+    mock_st.write.assert_called()
+
+
+def test_render_history_displays_empty_state():
+    with patch("app.st") as mock_st:
+        mock_st.session_state = SimpleNamespace(history=[])
+
+        from app import render_history
+        render_history()
+
+    mock_st.subheader.assert_called_once_with("Recent requests")
+    mock_st.caption.assert_called_once_with(
+        "Your submitted requests will appear here."
+    )
+
+
+def test_render_history_displays_previous_request():
+    response = make_response()
+    history_item = {
+        "department": "Finance",
+        "query": "Summarize quarterly revenue",
+        "response": response,
+    }
+
+    with patch("app.st") as mock_st:
+        mock_st.session_state = SimpleNamespace(history=[history_item])
+        mock_st.expander.return_value.__enter__.return_value = None
+
+        from app import render_history
+        render_history()
+
+    mock_st.expander.assert_called_once_with(
+        "Finance — Summarize quarterly revenue",
+        expanded=True,
+    )
+    mock_st.markdown.assert_any_call(
+        "**Request:** Summarize quarterly revenue"
+    )
+    mock_st.success.assert_called_once_with("Request completed")
