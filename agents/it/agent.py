@@ -1,4 +1,6 @@
-﻿"""Evidence-grounded IT support agent for Restructura One."""
+
+from core.conversation.history import format_conversation_history
+"""Evidence-grounded IT support agent for Restructura One."""
 
 from core.agent_interface import AgentRunner
 from core.llm.groq_gateway import GroqGateway
@@ -85,7 +87,12 @@ class ITAgent(AgentRunner):
                 for chunk in relevant
             )
 
+            history_section = format_conversation_history(
+                context.metadata.get("conversation_history", [])
+            )
+
             user_prompt = (
+                f"{history_section}"
                 f"User question:\n{query}\n\n"
                 f"Retrieved evidence:\n{evidence}\n\n"
                 "Answer using only the retrieved evidence. "

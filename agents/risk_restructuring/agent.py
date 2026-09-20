@@ -1,5 +1,6 @@
 ﻿"""Risk & Restructuring Intelligence agent."""
 
+from core.conversation.history import format_conversation_history
 from core.llm.groq_gateway import GroqGateway
 from core.rag.retriever import LocalRetriever
 from core.schemas.agent_contracts import (
@@ -78,10 +79,22 @@ class RiskRestructuringAgent:
                 for chunk in relevant
             )
 
+            conversation_history = format_conversation_history(
+                (context.metadata or {}).get("conversation_history", [])
+            )
+
+            history_section = (
+                f"Prior conversation context:\n{conversation_history}\n\n"
+                if conversation_history
+                else ""
+            )
+
             user_prompt = (
-                f"User question:\n{query}\n\n"
+                f"{history_section}"
+                f"Current user question:\n{query}\n\n"
                 f"Retrieved evidence:\n{evidence}\n\n"
                 "Answer using only the retrieved evidence. "
+                "Use prior conversation only to resolve references. "
                 "Identify material information that is not available."
             )
 

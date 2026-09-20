@@ -1,4 +1,4 @@
-﻿"""Streamlit entry point for Restructura One."""
+"""Streamlit entry point for Restructura One."""
 
 import streamlit as st
 
@@ -216,19 +216,79 @@ def render_response(response):
 
 
 def render_dashboard():
-    """Render the departmental landing page."""
-    st.title("Restructura One")
-    st.caption("Enterprise AI Workspace | Departmental Intelligence")
+    """Render the Restructura One homepage and departmental directory."""
 
-    st.info(
-        "AI-generated outputs are decision support, not autonomous approvals. "
-        "Review consequential recommendations before acting."
+    # Hero / company introduction
+    st.title("RESTRUCTURA ONE")
+    st.subheader("The Intelligent AI Workforce")
+    st.markdown(
+        "**One unified platform. Eight specialized AI agents. "
+        "Smarter business automation.**"
     )
 
-    st.subheader("Your AI workspace")
     st.write(
-        "Choose a department to work with its specialized assistant, "
-        "grounded in its department-specific synthetic knowledge base."
+        "Restructura One is an enterprise AI workspace designed to help "
+        "teams access department-specific intelligence, analyze business "
+        "questions, and prepare informed next steps from a single interface."
+    )
+
+    st.caption(
+        "Powered by Restructura Intelligence | "
+        "RAG | Agentic AI | Business Process Automation"
+    )
+
+    st.divider()
+
+    # Platform overview
+    st.subheader("Your AI workspace")
+    st.subheader("Your enterprise, connected with AI")
+    st.write(
+        "Explore a fictional Restructura company environment where "
+        "specialized AI assistants support key business functions. "
+        "Each assistant uses its own synthetic departmental knowledge "
+        "base to provide context-aware decision support."
+    )
+
+    metric_cols = st.columns(2)
+    metric_cols[0].metric("8", "Specialized AI Agents")
+    metric_cols[1].metric("1", "Unified Workspace")
+    st.caption("Decision governance: Human-led review of consequential actions.")
+
+    st.info(
+        "AI outputs are decision support, not autonomous approvals. "
+        "Review evidence and approve consequential actions before acting. "
+        "This academic prototype uses synthetic company data only."
+    )
+
+    # How it works
+    st.subheader("How Restructura One works")
+    step_cols = st.columns(2)
+
+    with step_cols[0]:
+        st.markdown("**01 - Choose**")
+        st.write(
+            "Select a department and its specialized AI assistant."
+        )
+
+    with step_cols[1]:
+        st.markdown("**02 - Ask**")
+        st.write(
+            "Submit a business question grounded in that department's "
+            "knowledge base."
+        )
+
+    st.markdown("**03 - Review**")
+    st.write(
+        "Review the response, supporting sources, and any proposed "
+        "actions before deciding what to do."
+    )
+
+    st.divider()
+
+    # Department directory / quick access
+    st.subheader("Explore the AI workforce")
+    st.write(
+        "Choose a department to open its dedicated conversational workspace."
     )
 
     columns = st.columns(2)
@@ -249,74 +309,127 @@ def render_dashboard():
 
 
 def render_department_workspace(label):
-    """Render the query and response workspace for one department."""
+    """Render a conversational workspace for one department."""
     department = DEPARTMENT_LOOKUP[label]
+    department_key = department.value
 
-    st.title(label)
-    st.caption("Department Assistant")
+    if "department_chats" not in st.session_state:
+        st.session_state.department_chats = {}
+
+    chats = st.session_state.department_chats
+    if department_key not in chats:
+        chats[department_key] = []
+
+    header_col, button_col = st.columns([5, 1])
+
+    with header_col:
+        st.title(label)
+        st.caption("Department Assistant · Conversational Workspace")
+
+    with button_col:
+        if st.button("＋ New chat", key=f"new_chat_{department_key}"):
+            chats[department_key] = []
+            st.rerun()
 
     st.info(
         "Responses are decision support. Verify evidence and review "
         "consequential recommendations before acting."
     )
 
-    st.write(
-        "Enter a business question or task. The assistant will respond "
-        "using its department-specific knowledge base."
+    st.caption(
+        "Ask a business question or task. Responses use the "
+        "department-specific knowledge base."
     )
 
-    with st.form(f"agent_query_form_{label}", clear_on_submit=False):
+    # Display this department's conversation
+    for message in chats[department_key]:
+        with st.chat_message(message["role"]):
+            if message["role"] == "assistant" and message.get("response"):
+                render_response(message["response"])
+            else:
+                st.markdown(message["content"])
+
+    with st.form(
+        key=f"chat_form_{department_key}",
+        clear_on_submit=True,
+    ):
         query = st.text_area(
-            "Your request",
-            placeholder="Describe the business question or task...",
-            height=130,
+            "Your message",
+            placeholder=f"Ask the {label} assistant...",
+            height=100,
+            label_visibility="collapsed",
         )
 
         submitted = st.form_submit_button(
-            "Submit request",
+            "Send message",
             type="primary",
             use_container_width=True,
         )
 
-    if submitted:
-        if not query or not query.strip():
-            st.warning("Please enter a request before submitting.")
-            return
+    if not submitted:
+        return
 
-        try:
-            orchestrator = get_orchestrator()
+    if not query or not query.strip():
+        st.warning("Please enter a message before submitting.")
+        return
 
-            context = AgentContext(
-                department=department,
-                session_id="streamlit-demo",
-                user_role="employee",
+    query = query.strip()
+
+    chats[department_key].append({
+        "role": "user",
+        "content": query,
+    })
+
+    try:
+        orchestrator = get_orchestrator()
+
+        prior_messages = chats[department_key][:-1]
+
+        context = AgentContext(
+            department=department,
+            session_id="streamlit-demo",
+            user_role="employee",
+            metadata={
+                "conversation_history": [
+                    {
+                        "role": message["role"],
+                        "content": message["content"],
+                    }
+                    for message in prior_messages
+                    if message.get("role") in {"user", "assistant"}
+                    and isinstance(message.get("content"), str)
+                ]
+            },
+        )
+
+        with st.spinner(f"Consulting {label}..."):
+            response = orchestrator.run(
+                query=query,
+                context=context,
             )
 
-            with st.spinner(f"Consulting {label}..."):
-                response = orchestrator.run(
-                    query=query.strip(),
-                    context=context,
-                )
+        chats[department_key].append({
+            "role": "assistant",
+            "content": response.answer,
+            "response": response,
+        })
 
-            st.session_state.history.insert(
-                0,
-                {
-                    "department": label,
-                    "query": query.strip(),
-                    "response": response,
-                },
-            )
+        st.session_state.history.insert(
+            0,
+            {
+                "department": label,
+                "query": query,
+                "response": response,
+            },
+        )
 
-            st.divider()
-            st.subheader("Assistant Response")
-            render_response(response)
+        st.rerun()
 
-        except Exception:
-            st.error(
-                "The workspace could not initialize or process this request. "
-                "Check your local configuration and terminal logs."
-            )
-
+    except Exception:
+        st.error(
+            "The workspace could not process this request. "
+            "Check your local configuration and terminal logs."
+        )
 
 def render_history():
     """Render query history stored for this browser session."""
