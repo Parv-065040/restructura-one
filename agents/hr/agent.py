@@ -1,4 +1,4 @@
-"""HR Intelligence agent."""
+﻿"""HR Intelligence agent."""
 
 from core.llm.groq_gateway import GroqGateway
 from core.rag.retriever import LocalRetriever
@@ -9,9 +9,11 @@ from core.schemas.agent_contracts import (
     Department,
     SourceCitation,
 )
+from core.conversation.history import format_conversation_history
 
 
 SYSTEM_PROMPT = """
+
 You are Restructura One's HR Intelligence assistant.
 
 Rules:
@@ -84,7 +86,12 @@ class HRAgent:
                 for chunk in relevant
             )
 
+            history_section = format_conversation_history(
+                context.metadata.get("conversation_history", [])
+            )
+
             user_prompt = (
+                f"{history_section}"
                 f"User question:\n{query}\n\n"
                 f"Retrieved HR evidence:\n{evidence}\n\n"
                 "Answer using only the retrieved evidence. "

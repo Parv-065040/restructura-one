@@ -1,4 +1,4 @@
-﻿from types import SimpleNamespace
+from types import SimpleNamespace
 
 from agents.risk_restructuring.agent import RiskRestructuringAgent
 from core.schemas.agent_contracts import (
@@ -17,7 +17,11 @@ class FakeRetriever:
 
 
 class FakeGateway:
+    def __init__(self):
+        self.last_user_prompt = None
+
     def generate(self, system_prompt, user_prompt, **kwargs):
+        self.last_user_prompt = user_prompt
         return "The guide lists tenure extension as an option for human review."
 
 
@@ -90,3 +94,31 @@ def test_risk_agent_requests_clarification_for_empty_query():
     response = agent.run("   ", make_context())
 
     assert response.status == AgentStatus.NEEDS_CLARIFICATION
+
+def test_risk_agent_includes_prior_conversation_in_prompt():
+    gateway = FakeGateway()
+    agent = RiskRestructuringAgent(
+        retriever=FakeRetriever([make_chunk()]),
+        gateway=gateway,
+    )
+
+    context = AgentContext(
+        department=Department.RISK_RESTRUCTURING,
+        metadata={
+            "conversation_history": [
+                {"role": "user", "content": "What is a tenure extension?"},
+                {
+                    "role": "assistant",
+                    "content": "It may reduce periodic payment burden.",
+                },
+            ]
+        },
+    )
+
+    response = agent.run("What about 6 months?", context)
+
+    assert response.status == AgentStatus.SUCCESS
+    assert "Prior conversation" in gateway.last_user_prompt
+    assert "What is a tenure extension?" in gateway.last_user_prompt
+    assert "What about 6 months?" in gateway.last_user_prompt
+    assert "Retrieved evidence:" in gateway.last_user_prompt

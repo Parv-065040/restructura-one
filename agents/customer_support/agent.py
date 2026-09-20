@@ -1,6 +1,7 @@
 """Customer Support Intelligence agent for Restructura One."""
 
 from core.agent_interface import AgentRunner
+from core.conversation.history import format_conversation_history
 from core.llm.groq_gateway import GroqGateway
 from core.rag.retriever import LocalRetriever
 from core.schemas.agent_contracts import (
@@ -87,7 +88,12 @@ class CustomerSupportAgent(AgentRunner):
                 for chunk in relevant_chunks
             )
 
+            history_section = format_conversation_history(
+                context.metadata.get("conversation_history", [])
+            )
+
             prompt = f"""
+{history_section}
 Customer Support evidence:
 
 {evidence}

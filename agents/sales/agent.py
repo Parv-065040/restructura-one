@@ -1,4 +1,6 @@
 
+from core.conversation.history import format_conversation_history
+
 """Sales Intelligence agent for Restructura One."""
 
 from core.agent_interface import AgentRunner
@@ -87,7 +89,12 @@ class SalesAgent(AgentRunner):
                 for chunk in relevant
             )
 
+            history_section = format_conversation_history(
+                context.metadata.get("conversation_history", [])
+            )
+
             user_prompt = (
+                f"{history_section}"
                 f"User question:\n{query}\n\n"
                 f"Retrieved evidence:\n{evidence}\n\n"
                 "Answer using only the retrieved evidence. "

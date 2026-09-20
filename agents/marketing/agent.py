@@ -1,4 +1,4 @@
-"""Marketing Intelligence agent for Restructura One."""
+﻿"""Marketing Intelligence agent for Restructura One."""
 
 from core.agent_interface import AgentRunner
 from core.llm.groq_gateway import GroqGateway
@@ -10,9 +10,11 @@ from core.schemas.agent_contracts import (
     Department,
     SourceCitation,
 )
+from core.conversation.history import format_conversation_history
 
 
 SYSTEM_PROMPT = """
+
 You are Restructura One's Marketing Intelligence assistant.
 
 Rules:
@@ -93,7 +95,12 @@ class MarketingAgent(AgentRunner):
                 for chunk in relevant
             )
 
+            history_section = format_conversation_history(
+                context.metadata.get("conversation_history", [])
+            )
+
             user_prompt = (
+                f"{history_section}"
                 f"User request:\n{query}\n\n"
                 f"Retrieved Marketing evidence:\n{evidence}\n\n"
                 "Answer using only the retrieved evidence. "
