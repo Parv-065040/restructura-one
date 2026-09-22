@@ -260,12 +260,9 @@ on that result.
 
 ## Contributors
 
--   **Parv Jhamb** --- Streamlit workspace/UI, shared integration, and
-    project development
--   **Awantika** --- Department-agent development and project
-    collaboration
-
-Update contributor roles if the final division of work differs.
+-   **Parv** 
+-   **Awantika** 
+-   **Aman**
 
 ## License
 
