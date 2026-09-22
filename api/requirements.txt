@@ -1,0 +1,6 @@
+# Add these to your existing requirements.txt (do not replace it —
+# streamlit/groq/faiss-cpu/sentence-transformers/pydantic/pytest all stay).
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30,<1
+websockets>=13,<14
+python-multipart>=0.0.9

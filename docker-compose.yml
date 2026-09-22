@@ -1,0 +1,14 @@
+# Local dev convenience — run from repo root: docker compose up
+# Frontend is best run with `npm run dev` directly (fast refresh);
+# add a frontend service here later if you want fully containerized dev.
+services:
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
