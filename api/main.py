@@ -1,4 +1,4 @@
-"""
+﻿"""
 Restructura One — API layer (Phase 1 scaffold)
 ================================================
 
@@ -6,23 +6,12 @@ Wraps the EXISTING core/ orchestrator (contracts, agents, Groq gateway,
 RAG) behind FastAPI so a React/Next.js frontend can call it instead of
 Streamlit. Nothing in core/ is modified by this file.
 
-VERIFY BEFORE RELYING ON THIS — do not assume these names are exact:
-  - core.app_bootstrap: the exact builder function name/signature.
-    Documented behavior: "Builds the orchestrator, registers all eight
-    agents, uses a shared Groq gateway, and configures department-
-    specific retrievers." This file tries a few common names; replace
-    the try block below with the real one once you've checked
-    core/app_bootstrap.py.
-  - core.schemas.agent_contracts: Department, AgentContext, AgentResponse
-    field names. AgentContext is documented as:
-        department, session_id, user_role, permissions, metadata
-    AgentResponse fields are NOT fully documented in the master context
-    file — this code treats it as a Pydantic model and serializes it
-    with .model_dump() so it works regardless of exact fields. Confirm
-    field names once you've looked at the real class.
-  - AgentOrchestrator.run(query, context): documented signature. This
-    file calls it and awaits if it's a coroutine, calls sync otherwise,
-    so it works either way.
+Confirmed against the real core/ code:
+  - core.app_bootstrap.build_orchestrator(gateway=None, retriever_factory=LocalRetriever)
+  - AgentContext fields: department, session_id, user_role, permissions, metadata
+  - AgentResponse fields: department, answer, status, sources, actions, metadata
+  - Department values: risk_restructuring, finance, sales, it, hr, marketing,
+    legal_compliance, customer_support
 
 Run locally:
     pip install -r api/requirements.txt
@@ -43,8 +32,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 # ---------------------------------------------------------------------------
-# Wire up the existing orchestrator. Adjust this block to match the real
-# core/app_bootstrap.py once you've inspected it — see docstring above.
+# Wire up the existing orchestrator.
 # ---------------------------------------------------------------------------
 _orchestrator = None
 _bootstrap_error: str | None = None
@@ -52,25 +40,7 @@ _bootstrap_error: str | None = None
 try:
     from core import app_bootstrap  # type: ignore
 
-    _builder_candidates = [
-        "build_orchestrator",
-        "bootstrap_orchestrator",
-        "create_orchestrator",
-        "get_orchestrator",
-        "bootstrap",
-    ]
-    for _name in _builder_candidates:
-        _fn = getattr(app_bootstrap, _name, None)
-        if callable(_fn):
-            _orchestrator = _fn()
-            break
-    if _orchestrator is None:
-        _bootstrap_error = (
-            "core.app_bootstrap was imported but none of "
-            f"{_builder_candidates} were found on it. Open "
-            "core/app_bootstrap.py and update _builder_candidates above "
-            "with the real function name."
-        )
+    _orchestrator = app_bootstrap.build_orchestrator()
 except Exception as exc:  # pragma: no cover - surfaced via /health instead
     _bootstrap_error = f"Failed to import/build orchestrator: {exc!r}"
 
@@ -183,9 +153,9 @@ async def chat(req: ChatRequest) -> ChatResponse:
     payload = _to_dict(response) or {}
     return ChatResponse(
         department=req.department,
-        answer=payload.get("answer", payload.get("content", "")),
-        citations=payload.get("citations", []),
-        proposed_actions=payload.get("proposed_actions", payload.get("actions", [])),
+        answer=payload.get("answer", ""),
+        citations=payload.get("sources", []),
+        proposed_actions=payload.get("actions", []),
         raw=payload,
     )
 
@@ -212,7 +182,7 @@ async def chat_ws(websocket: WebSocket) -> None:
             try:
                 response = await _run_orchestrator(req.query, context)
                 payload = _to_dict(response) or {}
-                answer = payload.get("answer", payload.get("content", ""))
+                answer = payload.get("answer", "")
             except Exception as exc:
                 await websocket.send_json(
                     {"type": "error", "message": f"Agent invocation failed: {type(exc).__name__}"}
@@ -227,8 +197,8 @@ async def chat_ws(websocket: WebSocket) -> None:
             await websocket.send_json(
                 {
                     "type": "done",
-                    "citations": payload.get("citations", []),
-                    "proposed_actions": payload.get("proposed_actions", payload.get("actions", [])),
+                    "citations": payload.get("sources", []),
+                    "proposed_actions": payload.get("actions", []),
                 }
             )
     except WebSocketDisconnect:
