@@ -1,0 +1,10 @@
+groq
+faiss-cpu
+sentence-transformers==5.1.2
+python-dotenv
+pydantic>=2,<3
+pytest
+
+# Added for the HTTP API layer (api/main.py) that the React frontend calls.
+fastapi
+uvicorn[standard]
