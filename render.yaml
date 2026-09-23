@@ -12,4 +12,4 @@
       - key: GROQ_MODEL
         value: openai/gpt-oss-120b
       - key: CORS_ORIGINS
-        value: https://restructra-one-fullstack-6li62pm9-parv-065040s-projects.vercel.app
+        value: https://restructra-one-fullstack.vercel.app
