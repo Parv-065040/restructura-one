@@ -13,6 +13,7 @@ from agents.sales.agent import SalesAgent
 from core.agent_registry import AgentRegistry
 from core.llm.groq_gateway import GroqGateway
 from core.orchestrator import AgentOrchestrator
+from core.rag.lazy_retriever import LazyLocalRetriever
 from core.rag.retriever import LocalRetriever
 from core.schemas.agent_contracts import Department
 
@@ -24,10 +25,10 @@ def build_orchestrator(
     gateway=None,
     retriever_factory=LocalRetriever,
 ) -> AgentOrchestrator:
-    """Build and return an orchestrator with all 8 agents registered.
+    """Build an orchestrator with all 8 agents registered.
 
-    A shared gateway is used across agents. Each agent receives a
-    retriever built exclusively from its own department's documents.
+    Each agent receives a lazy retriever scoped to its department.
+    The underlying retriever is initialized on first search.
     Dependencies can be injected for tests.
     """
     shared_gateway = gateway if gateway is not None else GroqGateway()
@@ -57,7 +58,10 @@ def build_orchestrator(
     ]
 
     for department, agent_class, folder in agent_config:
-        retriever = retriever_factory(KNOWLEDGE_BASE_ROOT / folder)
+        retriever = LazyLocalRetriever(
+            KNOWLEDGE_BASE_ROOT / folder,
+            retriever_factory=retriever_factory,
+        )
         agent = agent_class(
             retriever=retriever,
             gateway=shared_gateway,
